@@ -13,6 +13,17 @@ function getTextField(formData: FormData, fieldName: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isResumeParseError(
+  error: unknown,
+): error is Error & { status: number } {
+  return (
+    error instanceof Error &&
+    error.name === "ResumeParseError" &&
+    "status" in error &&
+    typeof error.status === "number"
+  );
+}
+
 export function GET() {
   return NextResponse.json({
     status: "ok",
@@ -71,14 +82,11 @@ export async function POST(request: Request) {
       return errorResponse(error.message, error.status);
     }
 
-    console.error("Analyze request failed:", error);
-    if (
-      error instanceof Error &&
-      error.message === "当前仅支持 PDF / DOCX 格式简历"
-    ) {
-      return errorResponse(error.message);
+    if (isResumeParseError(error)) {
+      return errorResponse(error.message, error.status);
     }
 
-    return errorResponse("分析失败，请检查文件格式或稍后重试", 500);
+    console.error("Analyze request failed:", error);
+    return errorResponse("分析服务暂时不可用，请稍后重试", 500);
   }
 }

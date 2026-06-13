@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { Card } from "@/components/Card";
 import { designSystem } from "@/lib/designSystem";
 
+const MAX_RESUME_FILE_SIZE = 4 * 1024 * 1024;
+
 type ResumeUploaderProps = {
   file: File | null;
   isSampleResume: boolean;
@@ -36,6 +38,14 @@ export function ResumeUploader({
 
     if (!isSupportedResume(selectedFile)) {
       setError("当前仅支持 PDF / DOCX 格式简历");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      return;
+    }
+
+    if (selectedFile.size > MAX_RESUME_FILE_SIZE) {
+      setError("简历文件过大，请上传小于 4 MB 的 PDF 或 DOCX 文件");
       if (inputRef.current) {
         inputRef.current.value = "";
       }
@@ -143,7 +153,7 @@ export function ResumeUploader({
               : "拖拽简历到这里，或点击选择文件"}
         </span>
         <span className="relative mt-2 text-sm text-slate-400">
-          文件仅用于本次分析，不会长期保存
+          支持 PDF / DOCX，文件小于 4 MB，仅用于本次分析
         </span>
       </label>
 
