@@ -104,7 +104,23 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
-      const payload = (await response.json()) as AnalysisResultData | { error?: string };
+      const responseText = await response.text();
+      let payload: AnalysisResultData | { error?: string };
+
+      try {
+        payload = JSON.parse(responseText) as AnalysisResultData | { error?: string };
+      } catch {
+        console.error("Analyze API returned a non-JSON response:", {
+          status: response.status,
+          contentType: response.headers.get("content-type"),
+          preview: responseText.slice(0, 200),
+        });
+        throw new Error(
+          response.status === 413
+            ? "简历文件过大，请上传更小的文件或使用示例简历"
+            : `分析服务返回异常响应（HTTP ${response.status}），请检查 Vercel Functions 日志与环境变量`,
+        );
+      }
 
       if (!response.ok) {
         throw new Error(
